@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp.Drawing.Processing;
+﻿using Serilog;
+using SixLabors.ImageSharp.Drawing.Processing;
 using System.Numerics;
 
 namespace CircImger.Common.Drawings
@@ -7,6 +8,8 @@ namespace CircImger.Common.Drawings
     where TPixel : unmanaged, IPixel<TPixel>
     {
         public static Texture2d<TPixel> Empty => new Texture2d<TPixel>();
+
+
         private Image? image = null;
         public Size ActualSize
         {
@@ -20,8 +23,10 @@ namespace CircImger.Common.Drawings
         private SizeF size = SizeF.Empty;
         public SizeF Size { get => size; set => size = value; }
 
+        private bool isEmpty = false;
         private Texture2d()
         {
+            this.isEmpty = true;
         }
 
         public Texture2d(string path)
@@ -31,14 +36,19 @@ namespace CircImger.Common.Drawings
         }
 
         public void Draw(ref Image<TPixel> canvas, RectangleF rect)
-            => Draw(ref canvas, rect, Vector2.Zero, Color.White, DrawingMode.Normal);
+            => Draw(ref canvas, rect, Vector2.Zero, Color.White);
         public void Draw(ref Image<TPixel> canvas, RectangleF rect, Color color)
-            => Draw(ref canvas, rect, Vector2.Zero, color, DrawingMode.Normal);
+            => Draw(ref canvas, rect, Vector2.Zero, color);
         public void Draw(ref Image<TPixel> canvas, RectangleF rect, Vector2 offset)
-            => Draw(ref canvas, rect, offset, Color.White, DrawingMode.Normal);
-        public void Draw(ref Image<TPixel> canvas, RectangleF rect, Vector2 offset, Color color, DrawingMode mode)
+            => Draw(ref canvas, rect, offset, Color.White);
+        public void Draw(ref Image<TPixel> canvas, RectangleF rect, Vector2 offset, Color color)
         {
-            if (image == null) return;
+            if (image == null)
+            {
+                if (!isEmpty)
+                    Log.Warning("tried to draw null.");
+                return;
+            }
 
             var scaleX = (float)ActualSize.Width / Size.Width;
             var scaleY = (float)ActualSize.Height / Size.Height;
@@ -51,9 +61,7 @@ namespace CircImger.Common.Drawings
             var stamp = image.Clone(x => x
                 .Resize(size)
             );
-            if (mode == DrawingMode.Normal)
-            {
-                stamp.Mutate(x => x
+            stamp.Mutate(x => x
                 .SetGraphicsOptions(o =>
                 {
                     o.ColorBlendingMode = PixelColorBlendingMode.Multiply;
@@ -66,12 +74,8 @@ namespace CircImger.Common.Drawings
                     o.AlphaCompositionMode = PixelAlphaCompositionMode.SrcOver;
                 })
                 .Opacity(color.ToPixel<Rgba32>().A / 255f)
-                );
-            }
-            if (mode == DrawingMode.Multiply)
-            {
-                throw new NotImplementedException();
-            }
+            );
+
             canvas.Mutate(x => 
                 x.DrawImage(stamp, new Point((int)Math.Floor(minX + offset.X), (int)Math.Floor(minY + offset.Y)), 1)
             );
@@ -90,6 +94,7 @@ namespace CircImger.Common.Drawings
                     {
                         image.Dispose();
                         image = null;
+                        isEmpty = false;
                     }
                 }
 

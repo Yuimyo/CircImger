@@ -19,8 +19,8 @@ namespace CircImger.Cmd
                 .WriteTo.Console()
                 .CreateLogger();
 
-            using (userSetting = new JsonConfig<UserSetting>(UserSetting.Filename))
-            using (objectSetting = new CsvConfig<ObjectDescription>(ObjectDescription.Filename, ObjectDescription.TryParse, ObjectDescription.FormatDescription))
+            using (userSetting = new JsonConfig<UserSetting>(Path.Combine(RootDirectory, UserSetting.Filename)))
+            using (objectSetting = new CsvConfig<ObjectDescription>(Path.Combine(RootDirectory, ObjectDescription.Filename), ObjectDescription.TryParse, ObjectDescription.FormatDescription))
             {
                 userSetting.Reloaded += UserSetting_Reloaded;
                 objectSetting.Reloaded += ObjectSetting_Reloaded;
@@ -49,17 +49,27 @@ namespace CircImger.Cmd
                 Log.Warning("config(s) are not available.");
                 return;
             }
-            var renderer = new ShapeRenderer(userSetting.Value);
-            using (var result = renderer.Render(objectSetting.Value))
+            try
             {
-                var resultDirectory = userSetting.Value.Directories.Result;
-                if (!Path.IsPathRooted(resultDirectory))
-                    resultDirectory = Path.GetFullPath(resultDirectory);
-                if (!Directory.Exists(resultDirectory))
-                    Directory.CreateDirectory(resultDirectory);
+                var renderer = new ShapeRenderer(userSetting.Value);
+                using (var result = renderer.Render(objectSetting.Value))
+                {
+                    var resultDirectory = userSetting.Value.Directories.Result;
+                    var resultFilename = userSetting.Value.ResultFileName;
+                    if (resultFilename == string.Empty)
+                        throw new InvalidDataException();
+                    if (!Path.IsPathRooted(resultDirectory))
+                        resultDirectory = Path.GetFullPath(resultDirectory);
+                    if (!Directory.Exists(resultDirectory))
+                        Directory.CreateDirectory(resultDirectory);
 
-                result.Save(Path.Combine(resultDirectory, $"result.png"));
-                Log.Information("Rendered!");
+                    result.Save(Path.Combine(resultDirectory, resultFilename));
+                    Log.Information("Rendered!");
+                }
+            }
+            catch (InvalidDataException)
+            {
+                Log.Warning("invalid data.");
             }
         }
     }

@@ -7,8 +7,9 @@ namespace CircImger.Common.IO
     {
         private FileSystemWatcher watcher;
 
-        private string filename = string.Empty;
-        protected string fullPath => Path.Combine(DrawState.RootDirectory, filename);
+        private string directoryName = string.Empty;
+        private string fileName = string.Empty;
+        protected string fullPath => Path.Combine(directoryName, fileName);
 
         private TConfig value = new();
         public TConfig Value
@@ -23,10 +24,15 @@ namespace CircImger.Common.IO
         public delegate void ConfigReloadingEventHandler(object sender, ConfigReloadingEventArgs<TConfig> e);
         public event ConfigReloadingEventHandler? Reloaded;
 
-        public Config(string filename)
+        public Config(string filepath)
         {
-            this.filename = filename;
-            watcher = new FileSystemWatcher(DrawState.RootDirectory);
+            this.fileName = Path.GetFileName(filepath);
+            var dir = Path.GetDirectoryName(filepath);
+            if (dir == null)
+                throw new ArgumentException();
+            this.directoryName = dir!;
+
+            watcher = new FileSystemWatcher(directoryName);
 
             watcher.Created += Watcher_Changed;
             watcher.Renamed += Watcher_Changed;
@@ -116,7 +122,8 @@ namespace CircImger.Common.IO
                     watcher.Renamed -= Watcher_Changed;
                     watcher.Changed -= Watcher_Changed;
                     watcher.Dispose();
-                    filename = string.Empty;
+                    directoryName = string.Empty;
+                    fileName = string.Empty;
                 }
 
                 // TODO: アンマネージド リソース (アンマネージド オブジェクト) を解放し、ファイナライザーをオーバーライドします

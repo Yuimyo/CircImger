@@ -12,7 +12,7 @@ namespace CircImger.Common.Utils
     {
         public static Vector2 SizeByOrigin(SizeF size, Origin origin)
         {
-            return new Vector2(size.Width * ((int)origin % 3) / 2, size.Height * ((int)origin / 3) / 2);
+            return new Vector2(size.Width * ((int)origin % 3) / 2f, size.Height * ((int)origin / 3) / 2f);
         }
     }
 }

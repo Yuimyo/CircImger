@@ -19,6 +19,9 @@ namespace CircImger.Common.IO
             public string Result { get; set; } = "..\\Results";
         }
 
+        [JsonPropertyName("result_filename")]
+        public string ResultFileName { get; set; } = "result.png";
+
         [JsonPropertyName("texture_names")]
         public TextureSetting Textures { get; set; } = new TextureSetting();
         public class TextureSetting

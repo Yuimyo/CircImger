@@ -13,7 +13,7 @@ namespace CircImger.Common
         private Texture2d<Rgba32> circleTexture = Texture2d<Rgba32>.Empty;
         private Texture2d<Rgba32> overlayTexture = Texture2d<Rgba32>.Empty;
         private Texture2d<Rgba32>[] numTextures = new Texture2d<Rgba32>[10];
-        private TextureDrawer<Rgba32>[] numDrawers = new TextureDrawer<Rgba32>[10];
+        private Shape[] numShapes = new Shape[10];
 
         private UserSetting setting;
         public ShapeRenderer(UserSetting setting)
@@ -33,7 +33,7 @@ namespace CircImger.Common
             for (int i = 0; i < 10; i++)
                 numTextures[i] = loadTexture(textureDirectory, setting.Textures.Numbers, i);
             for (int i = 0; i < 10; i++)
-                numDrawers[i] = new TextureDrawer<Rgba32>(new Square(Vector2.Zero, Origin.Center, numTextures[i].ActualSize * sizeScale), numTextures[i]);
+                numShapes[i] = new Square(Vector2.Zero, Origin.Center, numTextures[i].ActualSize * sizeScale);
         }
 
         private Texture2d<Rgba32> loadTexture(string textureDirectory, TextureDetailSetting textureDetail, int? index = null)
@@ -89,8 +89,7 @@ namespace CircImger.Common
 
         private void drawCircle(ref Image<Rgba32> canvas, Vector2 canvasOffset, ShapeDescription description)
         {
-            var background = new TextureDrawer<Rgba32>(description.Shape, circleTexture);
-            background.Draw(ref canvas, canvasOffset, description.Color, DrawingMode.Normal);
+            circleTexture.Draw(ref canvas, description.Shape.Area, canvasOffset, description.Color);
 
             var nums = new List<int>();
             foreach (var c in description.Number.ToString())
@@ -103,12 +102,11 @@ namespace CircImger.Common
             foreach (var i in nums)
             {
                 var width = numTextures[i].Size.Width * sizeScale;
-                numDrawers[i].Draw(ref canvas, canvasOffset + numOffset + new Vector2(width / 2, 0));
+                numTextures[i].Draw(ref canvas, numShapes[i].Area, canvasOffset + numOffset + new Vector2(width / 2, 0));
                 numOffset.X += width;
             }
 
-            var overlay = new TextureDrawer<Rgba32>(description.Shape, overlayTexture);
-            overlay.Draw(ref canvas, canvasOffset);
+            overlayTexture.Draw(ref canvas, description.Shape.Area, canvasOffset);
         }
 
         private Image<Rgba32> prepareCanvas(IEnumerable<Shape> shapes, out Vector2 offset)
@@ -116,10 +114,10 @@ namespace CircImger.Common
             float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
             foreach (var shape in shapes)
             {
-                MathHelper.Chmin(ref minX, shape.Rect.X);
-                MathHelper.Chmax(ref maxX, shape.Rect.X + shape.Rect.Width);
-                MathHelper.Chmin(ref minY, shape.Rect.Y);
-                MathHelper.Chmax(ref maxY, shape.Rect.Y + shape.Rect.Height);
+                MathHelper.Chmin(ref minX, shape.Area.X);
+                MathHelper.Chmax(ref maxX, shape.Area.X + shape.Area.Width);
+                MathHelper.Chmin(ref minY, shape.Area.Y);
+                MathHelper.Chmax(ref maxY, shape.Area.Y + shape.Area.Height);
             }
 
             offset = new(setting.Margin - minX, setting.Margin - minY);
@@ -135,7 +133,10 @@ namespace CircImger.Common
             {
                 if (disposing)
                 {
-                    // TODO: マネージド状態を破棄します (マネージド オブジェクト)
+                    circleTexture.Dispose();
+                    overlayTexture.Dispose();
+                    foreach(var numTexture in numTextures)
+                        numTexture.Dispose();
                 }
                 overlayTexture.Dispose();
 

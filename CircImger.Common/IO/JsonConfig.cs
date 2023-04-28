@@ -7,7 +7,7 @@ namespace CircImger.Common.IO
     public class JsonConfig<TConfig> : Config<TConfig>
         where TConfig : class, new()
     {
-        public JsonConfig(string filename) : base(filename)
+        public JsonConfig(string filepath) : base(filepath)
         {
             react();
         }

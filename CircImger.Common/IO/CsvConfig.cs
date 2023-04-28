@@ -9,7 +9,7 @@ namespace CircImger.Common.IO
         private Func<string, TConfig?> tryParse;
         private string formatDescription = string.Empty;
 
-        public CsvConfig(string filename, Func<string, TConfig?> tryParse, string formatDescription) : base(filename)
+        public CsvConfig(string filepath, Func<string, TConfig?> tryParse, string formatDescription) : base(filepath)
         {
             this.tryParse = tryParse;
             this.formatDescription = formatDescription;

@@ -6,7 +6,7 @@ namespace CircImger.Common.Drawings
     {
         public abstract Vector2 TopLeft { get; }
         public abstract SizeF Size { get; }
-        public RectangleF Rect => new RectangleF(TopLeft, Size);
+        public RectangleF Area => new RectangleF(TopLeft, Size);
 
         public Vector2 FromOrigin(Origin origin)
         {
